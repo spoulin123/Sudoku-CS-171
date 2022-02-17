@@ -60,7 +60,7 @@ class BTSolver:
                     neighbor.removeValueFromDomain(av.getAssignment())
                     modifiedDict[neighbor] = neighbor.getDomain()
 
-        return (modifiedDict,self.network.isConsistent())
+        return (modifiedDict,self.assignmentsCheck())
 
     # =================================================================
 	# Arc Consistency
