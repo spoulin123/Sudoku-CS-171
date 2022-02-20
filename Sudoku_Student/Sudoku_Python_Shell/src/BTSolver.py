@@ -74,9 +74,9 @@ class BTSolver:
             modifiedDict[var] = var.getDomain()
             if var.size() == 0:
                 consistent = False
-                print(self.network.toSudokuBoard(self.gameboard.p, self.gameboard.q))
-                print("FC: NOT CONSISTENT")
-                print(str(var))
+                # print(self.network.toSudokuBoard(self.gameboard.p, self.gameboard.q))
+                # print("FC: NOT CONSISTENT")
+                # print(str(var))
 
         # print(self.network.toSudokuBoard(self.gameboard.p, self.gameboard.q))
         #
