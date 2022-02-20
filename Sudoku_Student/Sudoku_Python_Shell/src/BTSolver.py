@@ -48,19 +48,47 @@ class BTSolver:
                 The bool is true if assignment is consistent, false otherwise.
     """
     def forwardChecking ( self ):
+        consistent = True
+        toModifyItems = []
+        toModifySet = set()
         modifiedDict = {}
-        assignedVars = []
+        assignedVars = set()
         for c in self.network.constraints:
             for v in c.vars:
                 if v.isAssigned():
-                    assignedVars.append(v)
-        for av in assignedVars:
+                    assignedVars.add(v)
+        # for var in list(assignedVars):
+        #     print(str(var))
+        for av in list(assignedVars):
             for neighbor in self.network.getNeighborsOfVariable(av):
                 if neighbor.isChangeable and not neighbor.isAssigned() and neighbor.getDomain().contains(av.getAssignment()):
-                    neighbor.removeValueFromDomain(av.getAssignment())
-                    modifiedDict[neighbor] = neighbor.getDomain()
+                    toModifyItems.append((neighbor,av.getAssignment()))
+                    toModifySet.add(neighbor)
 
-        return (modifiedDict,self.assignmentsCheck())
+        for neighbor in list(toModifySet):
+            #print(str(neighbor))
+            self.trail.push(neighbor)
+        #print()
+        for var, assignment in toModifyItems:
+            var.removeValueFromDomain(assignment)
+            modifiedDict[var] = var.getDomain()
+            if var.size() == 0:
+                consistent = False
+                print(self.network.toSudokuBoard(self.gameboard.p, self.gameboard.q))
+                print("FC: NOT CONSISTENT")
+                print(str(var))
+
+        # print(self.network.toSudokuBoard(self.gameboard.p, self.gameboard.q))
+        #
+        # for var, domain, in modifiedDict.items():
+        #     print(str(var))
+        #     print(str(domain))
+        #
+        # print(self.assignmentsCheck())
+
+        #input()
+
+        return (modifiedDict,consistent)
 
     # =================================================================
 	# Arc Consistency
@@ -129,7 +157,14 @@ class BTSolver:
         Return: The unassigned variable with the smallest domain
     """
     def getMRV ( self ):
-        return None
+        unassignedVars = set()
+        for c in self.network.constraints:
+            for v in c.vars:
+                if not v.isAssigned():
+                    unassignedVars.add(v)
+        if len(list(unassignedVars)) == 0:
+            return None
+        return sorted(list(unassignedVars), key = lambda var: var.size())[0]
 
     """
         Part 2 TODO: Implement the Minimum Remaining Value Heuristic
@@ -170,7 +205,8 @@ class BTSolver:
                 The LCV is first and the MCV is last
     """
     def getValuesLCVOrder ( self, v ):
-        return None
+        return sorted(v.getDomain().values, key = lambda val: sum(1 for neighbor in self.network.getNeighborsOfVariable(v) if neighbor.getDomain().contains(val)))
+        #return None
 
     """
          Optional TODO: Implement your own advanced Value Heuristic
