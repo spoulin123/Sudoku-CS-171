@@ -127,7 +127,78 @@ class BTSolver:
                 The bool is true if assignment is consistent, false otherwise.
     """
     def norvigCheck ( self ):
-        return ({}, False)
+        #i = 0
+        modified = True
+        assignedDict = {}
+        while True:
+            #i += 1
+            #print(i)
+            modified = False
+            fcResults = self.forwardChecking()
+            if len(fcResults[0]) != 0:
+                modified = True
+            if fcResults[1] == False:
+                return (assignedDict, False)
+            #constraintAssignments = {}
+            for c in self.network.constraints:
+                #make set of every value assigned or in a domain
+                #constraintAssignments[c] = set()
+                valueCounts = {}
+                for var in c.vars:
+                    if not var.isAssigned():
+                        for val in var.domain.values:
+                            if val in valueCounts:
+                                valueCounts[val] += 1
+                            else:
+                                valueCounts[val] = 1
+
+                    #constraintValues.update(var.domain.values)
+                for var in c.vars:
+                    if not var.isAssigned():
+                        for val in var.domain.values:
+                            if valueCounts[val] == 1:
+                                self.trail.push(var)
+                                var.assignValue(val)
+                                for n in self.network.getNeighborsOfVariable(var):
+                                    if n.domain.contains(val):
+                                        self.trail.push(n)
+                                        n.removeValueFromDomain(val)
+                                assignedDict[var] = val
+                                #assignedValues.add(val)
+                                modified = True
+                            if var.isAssigned(): break
+
+                            # if val not in conValues:
+                            #     valFound = False
+                            #     for var2 in c.vars:
+                            #         if var2 != var:
+                            #             if var2.domain.contains(val): valFound = True
+                            #     if valFound: continue
+                            #     if not valFound:
+                            #         self.trail.push(var)
+                            #         var.assignValue(val)
+                            #         for n in self.network.getNeighborsOfVariable(var):
+                            #             if n.domain.contains(val):
+                            #                 self.trail.push(n)
+                            #                 n.removeValueFromDomain(val)
+                            #         assignedDict[var] = val
+                            #         assignedValues.add(val)
+                            #         modified = True
+                            # if var.isAssigned(): break
+            if not modified:
+                break
+
+
+
+
+
+
+        #print(self.network.toSudokuBoard(self.gameboard.p, self.gameboard.q))
+
+            #do forward checking, set modified to true if modified dict isnt empty
+            #assign sole variables, map assigned variables to their assignment in assignedDict
+        #modifiedDict =
+        return (assignedDict, self.network.isConsistent())
 
     """
          Optional TODO: Implement your own advanced Constraint Propagation
@@ -175,7 +246,21 @@ class BTSolver:
                 If there is only one variable, return the list of size 1 containing that variable.
     """
     def MRVwithTieBreaker ( self ):
-        return None
+        unassignedVars = set()
+        for c in self.network.constraints:
+            for v in c.vars:
+                if not v.isAssigned():
+                    unassignedVars.add(v)
+        unassignedVars = list(unassignedVars)
+        if len(unassignedVars) == 0:
+            return [None]
+
+        minDomainSize = min([var.size() for var in unassignedVars])
+        unassignedVars = [var for var in unassignedVars if var.size() == minDomainSize]
+        maxAffectedNeighbors = max([len([neighbor for neighbor in self.network.getNeighborsOfVariable(var) if not neighbor.isAssigned()]) for var in unassignedVars])
+        unassignedVars = [var for var in unassignedVars if len([neighbor for neighbor in self.network.getNeighborsOfVariable(var) if not neighbor.isAssigned()]) == maxAffectedNeighbors]
+
+        return unassignedVars
 
     """
          Optional TODO: Implement your own advanced Variable Heuristic
